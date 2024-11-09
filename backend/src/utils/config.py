@@ -3,7 +3,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database settings
-    mongodb_url: str
+    supabase_url: str
     mongodb_db_name: str
     redis_url: str
     

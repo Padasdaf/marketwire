@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +21,9 @@ export default function RootLayout({
     <html lang="en">
       {/* Required for pricing table */}
       <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-      <body className={inter.className}>{children}</body>
+        {" "}
+        <body className={inter.className}>
+        {children}</body>
     </html>
   );
 }
