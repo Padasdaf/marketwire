@@ -1,15 +1,10 @@
 "use client";
-import dynamic from "next/dynamic";
-
 import { useRouter } from "next/navigation";
 import { redirect } from "next/navigation";
 import { useSupabase } from "../context/SupabaseContext";
 import { DataTable } from "@/components/Stocks/data-table";
 import { columns, Stock } from "@/components/Stocks/columns";
 import { useEffect, useState } from "react";
-const StockChart = dynamic(() => import("@/components/Stocks/StockChart"), {
-  ssr: false, // ensures the component only renders on the client
-});
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import NewsBlocks, { Article } from "@/components/NewsBlocks";
 
