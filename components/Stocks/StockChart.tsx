@@ -6,7 +6,30 @@ interface StockChartProps {
   symbol: string;
 }
 
-class StockChart extends React.Component<StockChartProps> {
+interface StockChartState {
+  series: { data: { x: number; y: number[] }[] }[];
+  options: {
+    chart: {
+      type: string;
+      height: number;
+      id: string;
+    };
+    title: {
+      text: string;
+      align: string;
+    };
+    xaxis: {
+      type: string;
+    };
+    yaxis: {
+      tooltip: {
+        enabled: boolean;
+      };
+    };
+  };
+}
+
+class StockChart extends React.Component<StockChartProps, StockChartState> {
   private chart: ApexCharts | null = null;
 
   constructor(props: StockChartProps) {
