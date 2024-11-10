@@ -24,6 +24,7 @@
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.1",
     "@tanstack/react-table": "^8.20.5",
+    "apexcharts": "^4.0.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.6",
     "chartjs-adapter-date-fns": "^3.0.0",
