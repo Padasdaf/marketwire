@@ -58,7 +58,7 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
         const last30Days = data.historical.slice(0, 30).reverse();
 
         // Convert data for candlestick chart
-        const candlestickData = last30Days.map((day) => ({
+        const candlestickData = last30Days.map((day:any) => ({
           x: new Date(day.date).getTime(),
           o: day.open,
           h: day.high,
