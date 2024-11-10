@@ -1,117 +1,127 @@
 from transformers import pipeline
-from src.models.database import db
 from src.utils.logger import logger
-from src.utils.config import get_settings
-from datetime import datetime, timedelta
-
-settings = get_settings()
+from datetime import datetime
+from typing import Tuple, Optional
 
 class SentimentAnalyzer:
     def __init__(self):
-        # Initialize the sentiment analysis pipeline
-        self.analyzer = pipeline(
-            "sentiment-analysis",
-            model="ProsusAI/finbert",  # Financial domain-specific BERT model
-            tokenizer="ProsusAI/finbert"
-        )
-        self.positive_threshold = settings.sentiment_threshold_positive
-        self.negative_threshold = settings.sentiment_threshold_negative
+        try:
+            self.analyzer = pipeline(
+                "sentiment-analysis",
+                model="ProsusAI/finbert",
+                tokenizer="ProsusAI/finbert",
+                timeout=30
+            )
+        except Exception as e:
+            logger.error(f"Error initializing sentiment analyzer: {str(e)}")
+            raise
 
-    def analyze_text(self, text: str) -> tuple:
+    def analyze_text(self, text: str) -> Tuple[str, float]:
         """
-        Analyze the sentiment of a given text
+        Analyze the sentiment of a given text with improved error handling.
         Returns: (sentiment_label, sentiment_score)
         """
         try:
-            # Truncate text if it's too long (BERT models typically have a max length)
-            max_length = 512
-            if len(text.split()) > max_length:
-                text = " ".join(text.split()[:max_length])
+            # Input validation
+            if not text or not isinstance(text, str):
+                logger.warning("Invalid input text provided")
+                return ("neutral", 0.0)
 
-            # Get sentiment prediction
-            result = self.analyzer(text)[0]
-            label = result['label']
-            score = result['score']
+            text = text.strip()
+            if len(text) == 0:
+                logger.warning("Empty text provided")
+                return ("neutral", 0.0)
 
-            # Map sentiment labels
-            sentiment_map = {
-                'positive': 1.0,
-                'negative': -1.0,
-                'neutral': 0.0
-            }
+            # Split text into manageable chunks
+            chunks = self._split_text(text)
+            if not chunks:
+                return ("neutral", 0.0)
 
-            normalized_score = sentiment_map.get(label, 0.0) * score
-            return label, normalized_score
+            # Analyze chunks
+            total_score = 0.0
+            sentiment_counts = {'positive': 0, 'negative': 0, 'neutral': 0}
+
+            for chunk in chunks:
+                try:
+                    result = self.analyzer(chunk)[0]
+                    label = result['label'].lower()  # Ensure lowercase
+                    score = float(result['score'])  # Ensure float type
+
+                    # Validate label
+                    if label not in sentiment_counts:
+                        logger.warning(f"Unexpected sentiment label: {label}")
+                        continue
+
+                    # Map and normalize score
+                    normalized_score = self._normalize_score(label, score)
+                    total_score += normalized_score
+                    sentiment_counts[label] += 1
+
+                except Exception as chunk_error:
+                    logger.error(f"Error analyzing chunk: {str(chunk_error)}")
+                    continue
+
+            # Calculate final results
+            if sum(sentiment_counts.values()) == 0:
+                logger.warning("No valid sentiment analysis results")
+                return ("neutral", 0.0)
+
+            avg_score = total_score / len(chunks)
+            max_sentiment = max(sentiment_counts.items(), key=lambda x: x[1])[0]
+
+            # Ensure return values are properly formatted
+            return (max_sentiment, round(avg_score, 3))
 
         except Exception as e:
             logger.error(f"Error in sentiment analysis: {str(e)}")
-            return "neutral", 0.0
+            return ("neutral", 0.0)
 
-    async def analyze_articles(self):
-        """
-        Analyze sentiment for all unanalyzed news articles
-        """
+    def _split_text(self, text: str, max_length: int = 512) -> list:
+        """Split text into chunks of maximum token length"""
         try:
-            # Get unanalyzed articles (where sentiment_score is 0)
-            articles = await db.db.news_articles.find(
-                {"sentiment_score": 0.0}
-            ).to_list(1000)
+            words = text.split()
+            if not words:
+                return []
 
-            for article in articles:
-                # Combine title and content for analysis
-                text = f"{article['title']} {article['content']}"
-                label, score = self.analyze_text(text)
+            chunks = []
+            current_chunk = []
+            current_length = 0
 
-                # Update article with sentiment analysis
-                await db.db.news_articles.update_one(
-                    {"_id": article["_id"]},
-                    {
-                        "$set": {
-                            "sentiment_score": score,
-                            "sentiment_label": label
-                        }
-                    }
-                )
+            for word in words:
+                word_length = len(word.split())
+                if current_length + word_length > max_length:
+                    if current_chunk:
+                        chunks.append(' '.join(current_chunk))
+                        current_chunk = [word]
+                        current_length = word_length
+                else:
+                    current_chunk.append(word)
+                    current_length += word_length
 
-                # Generate alerts if sentiment score exceeds thresholds
-                await self._check_and_generate_alerts(article["company_id"], score)
+            if current_chunk:
+                chunks.append(' '.join(current_chunk))
+
+            return chunks
 
         except Exception as e:
-            logger.error(f"Error in analyze_articles: {str(e)}")
+            logger.error(f"Error splitting text: {str(e)}")
+            return []
 
-    async def _check_and_generate_alerts(self, company_id: str, sentiment_score: float):
-        """
-        Generate alerts for users if sentiment score exceeds thresholds
-        """
+    def _normalize_score(self, label: str, score: float) -> float:
+        """Normalize sentiment scores"""
+        sentiment_map = {
+            'positive': 1.0,
+            'negative': -1.0,
+            'neutral': 0.0
+        }
+        
         try:
-            # Find users who are tracking this company
-            users = await db.db.user_preferences.find(
-                {
-                    "companies": company_id,
-                    "is_active": True
-                }
-            ).to_list(1000)
-
-            for user in users:
-                alert_type = None
-                if sentiment_score >= self.positive_threshold:
-                    alert_type = "sell"  # High positive sentiment might indicate a good time to sell
-                elif sentiment_score <= -self.negative_threshold:
-                    alert_type = "buy"   # High negative sentiment might indicate a buying opportunity
-
-                if alert_type:
-                    # Create sentiment alert
-                    alert = {
-                        "company_id": company_id,
-                        "user_id": user["user_id"],
-                        "sentiment_score": sentiment_score,
-                        "alert_type": alert_type,
-                        "created_at": datetime.utcnow(),
-                        "is_sent": False
-                    }
-                    await db.db.sentiment_alerts.insert_one(alert)
-
+            base_score = sentiment_map.get(label, 0.0)
+            normalized = base_score * max(min(score, 1.0), 0.0)  # Clamp between 0 and 1
+            return round(normalized, 3)
         except Exception as e:
-            logger.error(f"Error in _check_and_generate_alerts: {str(e)}")
+            logger.error(f"Error normalizing score: {str(e)}")
+            return 0.0
 
+# Create a single instance to be used across the application
 sentiment_analyzer = SentimentAnalyzer()

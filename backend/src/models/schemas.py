@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
+from uuid import UUID
 
 class SentimentLabel(str, Enum):
     POSITIVE = "POSITIVE"
@@ -12,51 +13,71 @@ class AlertType(str, Enum):
     BUY = "BUY"
     SELL = "SELL"
 
-class UserBase(BaseModel):
-    email: str
-    username: str
-
-class UserCreate(UserBase):
-    password: str
-
-class User(UserBase):
-    id: str = Field(alias="_id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    watchlist: List[str] = []
-
-class CompanyBase(BaseModel):
-    symbol: str
-    name: str
-    sector: Optional[str] = None
-
-class Company(CompanyBase):
-    id: str = Field(alias="_id")
-    subscribed_users: List[str] = []
-
 class Article(BaseModel):
-    id: str = Field(alias="_id")
-    company_symbol: str
+    url: str
     title: str
     content: str
-    url: str
     publish_date: datetime
     source: str
-    sentiment_score: Optional[float] = None
-    sentiment_label: Optional[SentimentLabel] = None
-    processed_date: Optional[datetime] = None
-
-class Alert(BaseModel):
-    id: str = Field(alias="_id")
     company_symbol: str
-    type: AlertType
-    message: str
-    sentiment_score: float
+    sentiment_score: Optional[float] = None
+    sentiment_label: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    notified_users: List[str] = []
 
+    @validator('sentiment_score')
+    def validate_sentiment_score(cls, v):
+        if v is not None and not (-1.0 <= v <= 1.0):
+            raise ValueError('Sentiment score must be between -1.0 and 1.0')
+        return v
+
+    @validator('sentiment_label')
+    def validate_sentiment_label(cls, v):
+        if v is not None and v.lower() not in ['positive', 'negative', 'neutral']:
+            raise ValueError('Invalid sentiment label')
+        return v.lower()
+
+class UserTable(BaseModel):
+    id: UUID
+    name: str
+    email: str                      
+    plan: str
+    stripe: str  # Changed from stripe_id to stripe to match the table
+
+class Company(BaseModel):
+    id: UUID
+    price: float
+    symbol: str
+    name: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    user_id: int  # Changed to int4 as per your schema
+    class Config:
+        from_attributes = True 
+
+class UserCompanyPreference(BaseModel):
+    id: UUID
+    user_id: UUID
+    company_symbol: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SentimentAlert(BaseModel):
+    id: UUID
+    user_id: UUID
+    company_symbol: str
+    sentiment_score: float
+    alert_type: str  # Changed from enum to text to match the table
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Response models
 class SentimentResponse(BaseModel):
     company_symbol: str
-    sentiment_score: float
-    sentiment_label: SentimentLabel
+    sentiment_score: float = Field(..., ge=-1.0, le=1.0)
+    sentiment_label: str
     recent_articles: List[Article]
     generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    @validator('sentiment_label')
+    def validate_sentiment_label(cls, v):
+        if v.lower() not in ['positive', 'negative', 'neutral']:
+            raise ValueError('Invalid sentiment label')
+        return v.lower()
