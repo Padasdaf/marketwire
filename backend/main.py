@@ -2,11 +2,11 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from celery import Celery
 from celery.schedules import crontab
-from .database import db
-from .utils.config import get_settings
-from .services.news_scraper import news_scraper
-from .services.sentiment_analyzer import sentiment_analyzer
-from .services.alert_manager import alert_manager
+from src.models.database import db
+from src.utils.config import get_settings
+from src.services.news_scraper import news_scraper
+from src.services.sentiment_analyzer import sentiment_analyzer
+from src.services.alert_manager import alert_manager
 
 settings = get_settings()
 

@@ -1,7 +1,7 @@
 from transformers import pipeline
-from ..database import db
-from ..utils.logger import logger
-from ..utils.config import get_settings
+from src.models.database import db
+from src.utils.logger import logger
+from src.utils.config import get_settings
 from datetime import datetime, timedelta
 
 settings = get_settings()

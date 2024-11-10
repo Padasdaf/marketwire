@@ -2,22 +2,13 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 class Settings(BaseSettings):
-    # Database settings
-    mongodb_url: str
-    mongodb_db_name: str
-    redis_url: str
+    # Supabase settings
+    supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13dGlmYWdoanFibHlrcmhxdHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3ODU0NzAsImV4cCI6MjA0NjM2MTQ3MH0.9sItFVLjb54T0bSO1QE97NxnF6Ob1vzFwdl1nQT2JsE"
+    supabase_url: str = "https://mwtifaghjqblykrhqtzq.supabase.co"
     
-    # API settings
-    api_secret_key: str
-    environment: str
-    
-    # Service settings
-    news_api_key: str
-    sentiment_threshold_positive: float
-    sentiment_threshold_negative: float
-    
-    # Logging
-    log_level: str
+    # # Celery settings
+    # celery_broker_url: str = "redis://localhost:6379/0"
+    # celery_result_backend: str = "redis://localhost:6379/0"
 
     class Config:
         env_file = ".env"
