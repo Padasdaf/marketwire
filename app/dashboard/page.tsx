@@ -31,7 +31,11 @@ const router = useRouter()
         .from("users_table")
         .select("*")
         .eq("email", user.email);
-      
+
+      if (!user_data.data || user_data.data.length === 0) {
+        console.error("No user data found");
+        return;
+      }
 
       const { data, error: fetchError } = await supabase
         .from("companies")
