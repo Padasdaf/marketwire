@@ -50,6 +50,8 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
         const response = await fetch(url);
         const data = await response.json();
 
+        console.log("API Response:", data);
+
         if (!data.historical) {
           throw new Error("No historical data received from API");
         }
