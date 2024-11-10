@@ -95,7 +95,7 @@ export default function LandingPage() {
                         <Star key={i} className="w-5 h-5 fill-primary text-primary" />
                       ))}
                     </div>
-                    <p className="text-muted-foreground mb-2">&quot;This product has revolutionized our workflow. Highly recommended!&quot;</p>
+                    <p className="text-muted-foreground mb-2">&quot;This product has revolutionized our portfolios. Highly recommended!&quot;</p>
                     <p className="font-semibold">- Sarah J., CEO</p>
                   </CardContent>
                 </Card>
@@ -106,7 +106,7 @@ export default function LandingPage() {
                         <Star key={i} className="w-5 h-5 fill-primary text-primary" />
                       ))}
                     </div>
-                    <p className="text-muted-foreground mb-2">&quot;Wow everything is already integrated! Less time configuring, more time building!.&quot;</p>
+                    <p className="text-muted-foreground mb-2">&quot;Wow everything is already integrated! So easy to get started and earn more!&quot;</p>
                     <p className="font-semibold">- Mark T., CTO</p>
                   </CardContent>
                 </Card>
@@ -117,7 +117,7 @@ export default function LandingPage() {
                         <Star key={i} className="w-5 h-5 fill-primary text-primary" />
                       ))}
                     </div>
-                    <p className="text-muted-foreground mb-2">&quot;We&aposve seen a 200% increase in productivity since implementing this solution.&quot;</p>
+                    <p className="text-muted-foreground mb-2">&quot;We&aposve seen a 200% increase in our finances since implementing this solution.&quot;</p>
                     <p className="font-semibold">- Emily R., Operations Manager</p>
                   </CardContent>
                 </Card>
@@ -222,7 +222,7 @@ export default function LandingPage() {
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Start Your Journey Today</h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Join thousands of satisfied customers and take your business to the next level.
+                    Join thousands of satisfied customers and take your finances to the next level.
                   </p>
                 </div>
                 <div className="w-full max-w-sm space-y-2">
@@ -236,7 +236,7 @@ export default function LandingPage() {
         </main>
         <Image src="/image.png" alt="Hero" width={2000} height={500} className="absolute z-0 opacity-5 object-cover h-[800px]"/>
         <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-          <p className="text-xs text-muted-foreground">© 2024 Acme Inc. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">© 2024 Marketwire All rights reserved.</p>
           <nav className="sm:ml-auto flex gap-4 sm:gap-6">
             <Link className="text-xs hover:underline underline-offset-4" href="#">
               Terms of Service

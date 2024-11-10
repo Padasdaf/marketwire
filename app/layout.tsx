@@ -8,8 +8,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SAAS Starter Kit",
-  description: "SAAS Starter Kit with Stripe, Supabase, Postgres",
+  title: "Marketwire",
+  description: "The warren buffet way of investing now at your finger tips research companies and invest in stocks",
 };
 
 export default function RootLayout({
