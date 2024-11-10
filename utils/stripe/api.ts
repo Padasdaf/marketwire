@@ -8,7 +8,7 @@ export async function getStripePlan(email: string) {
 
     const user = await db.select().from(usersTable).where(eq(usersTable.email, email))
     const subscription = await stripe.subscriptions.retrieve(
-        user[0].plan
+        ""
     );
     const productId = subscription.items.data[0].plan.product as string
     const product = await stripe.products.retrieve(productId)
@@ -25,26 +25,4 @@ export async function createStripeCustomer(id: string, email: string, name?: str
     });
     // Create a new customer in Stripe
     return customer.id
-}
-
-export async function createStripeCheckoutSession(email: string) {
-    const user = await db.select().from(usersTable).where(eq(usersTable.email, email))
-    const customerSession = await stripe.customerSessions.create({
-        customer: user[0].stripe_id,
-        components: {
-            pricing_table: {
-                enabled: true,
-            },
-        },
-    });
-    return customerSession.client_secret
-}
-
-export async function generateStripeBillingPortalLink(email: string) {
-    const user = await db.select().from(usersTable).where(eq(usersTable.email, email))
-    const portalSession = await stripe.billingPortal.sessions.create({
-        customer: user[0].stripe_id,
-        return_url: `${PUBLIC_URL}/dashboard`,
-    });
-    return portalSession.url
 }

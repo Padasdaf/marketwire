@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import Image from "next/image"
  
 // Menu items.
 const items = [
@@ -20,19 +21,10 @@ const items = [
   },
   {
     title: "Inbox",
-    url: "#",
+    url: "/inbox",
     icon: Inbox,
   },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
+ 
   {
     title: "Settings",
     url: "#",
@@ -43,9 +35,10 @@ const items = [
 export function AppSidebar() {
   return (
     <Sidebar>
+        <Image src="/Marketwire.svg" alt="logo" width={200} height={200}></Image>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Your Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

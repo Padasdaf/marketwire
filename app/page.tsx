@@ -1,47 +1,48 @@
-
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import Link from "next/link"
-import { Star, Check, Coins, UserCheck, Database } from "lucide-react"
+import { Star, Check, BriefcaseBusiness, UserCheck, Database, MessageSquareDot } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 export default function LandingPage() {
   return (
     
-      <div className="flex flex-col min-h-[100dvh]">
-        <header className="px-4 lg:px-6 h-16 flex items-center  bg-white border-b fixed border-b-slate-200 w-full">
+      <div className="flex flex-col min-h-[100dvh] w-full ">
+      
+        <header className="px-4 lg:px-6 h-16 flex items-center  bg-[#438B22] border-b fixed border-b-slate-200 w-full z-50">
           {/* <Link className="flex items-center justify-center" href="#">
             <Image src="/logo.png" alt="logo" width={50} height={50} />
             <span className="sr-only">Acme Inc</span>
           </Link> */}
-          <nav className="ml-auto flex gap-4 sm:gap-6">
-            <a className="text-sm font-medium hover:underline underline-offset-4" href="#features">
+          <nav className="ml-auto flex gap-4 sm:gap-6  ">
+            <a className="text-sm font-medium hover:underline hover:cursor-pointer underline-offset-4" href="#features">
               Features
             </a>
-            <a className="text-sm font-medium hover:underline underline-offset-4" href="#testimonials">
+            <a className="text-sm font-medium hover:underline hover:cursor-pointer underline-offset-4" href="#testimonials">
               Testimonials
             </a>
-            <a className="text-sm font-medium hover:underline underline-offset-4" href="#pricing">
+            <a className="text-sm font-medium hover:underline hover:cursor-pointer underline-offset-4" href="#pricing">
               Pricing
             </a>
           </nav>
-          <Button className="mx-2 md:mx-4 lg:mx-6 xl:mx-10" >
+          <Button className="mx-2 md:mx-4 lg:mx-6 xl:mx-10 hover:cursor-pointer" >
             <Link className="text-sm font-medium hover:underline underline-offset-4" href="/login">
               Get Started
             </Link>
           </Button>
         </header>
-        <main className="flex-1">
-          <section className="w-full py-20 lg:py-32 xl:py-40">
-            <div className="container px-4 md:px-6 flex flex-col md:flex-row ">
-              <div className="flex flex-col space-y-4 md:w-1/2 w-full ">
+        <main className="flex-1 pt-40 md:pt-0">
+          <section className="w-full py-15 lg:py-25 xl:py-36 md:pl-16 ">
+
+            <div className="container px-2 md:px-6 flex flex-col md:flex-row ">
+              <div className="flex flex-col space-y-4 md:w-1/2 w-full my-auto ">
                 <div className="space-y-2">
                   <h1 className="text-2xl  tracking-tighter sm:text-3xl md:text-4xl lg:text-5xl/none">
-                    Saas Template with Supabase, Stripe, Databases
+                    <span className="text-[99px] text-[#438B22]">Market</span><span className="text-[66px] text-[#737373] px-2">wire</span>
                   </h1>
                   <p className=" text-muted-foreground md:text-xl">
-                    NextJS Boilerplate with everything required to build your next SAAS Product
+                    Your One-Stop Real-Time Portfolio News Hub
                   </p>
                 </div>
                 <div className="space-x-4">
@@ -49,40 +50,40 @@ export default function LandingPage() {
                   <Button variant="outline">Learn More</Button>
                 </div>
               </div>
-              <div className="w-full md:w-1/2  flex justify-center">
-                <Image src="/hero.png" alt="Hero" width={500} height={500} priority />
+              <div className="w-full pl-2 flex justify-center ">
+                <Image src="/MarketWire.svg" alt="Hero" width={500} height={500} className="" />
               </div>
             </div>
           </section>
-          <section className="w-full py-10 md:py-20 lg:py-32 bg-muted" id="features">
+          <section className="w-full py-10 md:py-20 lg:py-32 bg-muted " id="features">
             <div className="container px-4 md:px-6">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-4">Our Features</h2>
               <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3">
                 <div className="flex flex-col items-center space-y-2 border-muted-foreground/10 p-4 rounded-lg">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Coins className="h-6 w-6 text-primary" />
+                  <div className="p-2 bg-[#438B22] rounded-full">
+                    <MessageSquareDot className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold">Payments</h3>
-                  <p className="text-muted-foreground text-center">Seamlesly integrate Stripe Billing to capture subscription payments - Webhooks and all</p>
+                  <h3 className="text-xl font-bold">Notifications</h3>
+                  <p className="text-muted-foreground text-center">Real time notification of news impacting your own personal portfolio</p>
                 </div>
                 <div className="flex flex-col items-center space-y-2 border-muted-foreground/10 p-4 rounded-lg">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <UserCheck className="h-6 w-6 text-primary" />
+                  <div className="p-2 bg-[#438B22] rounded-full">
+                    <UserCheck className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold">Auth</h3>
-                  <p className="text-muted-foreground text-center">Utilize our preexisting Superbase integration to auth your users and secure your app </p>
+                  <h3 className="text-xl font-bold">User authentication</h3>
+                  <p className="text-muted-foreground text-center">Personalized experience only accessible to you</p>
                 </div>
                 <div className="flex flex-col items-center space-y-2 border-muted-foreground/10 p-4 rounded-lg">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Database className="h-6 w-6 text-primary" />
+                  <div className="p-2 bg-[#438B22] rounded-full">
+                    <BriefcaseBusiness className="h-10 w-10 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold">Database</h3>
-                  <p className="text-muted-foreground text-center">Hook into any PostgresDB instance</p>
+                  <h3 className="text-xl font-bold">Mock Portfolio</h3>
+                  <p className="text-muted-foreground text-center">Get a mock portfolio where you can add all your current stocks and see current prices</p>
                 </div>
               </div>
             </div>
           </section>
-          <section className="w-full py-10 md:py-20 lg:py-32" id="testimonials">
+          <section className="w-full py-10 md:py-20 lg:py-32 z-0" id="testimonials">
             <div className="container px-4 md:px-6">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-4">What Our Customers Say</h2>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-8">
@@ -122,7 +123,7 @@ export default function LandingPage() {
               </div>
             </div>
           </section>
-          <section className="w-full py-10 md:py-20 lg:py-32 bg-muted" id="pricing">
+          {/* <section className="w-full py-10 md:py-20 lg:py-32 bg-muted z-0" id="pricing">
             <div className="container px-4 md:px-6">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-4">Pricing Plans</h2>
               <p className="text-muted-foreground text-center mb-8 md:text-xl">Choose the perfect plan for your needs</p>
@@ -213,8 +214,8 @@ export default function LandingPage() {
                 </Card>
               </div>
             </div>
-          </section>
-          <section className="w-full py-10 md:py-20 lg:py-32 ">
+          </section> */}
+          <section className="w-full py-10 md:py-20 lg:py-32 z-0 ">
             <div className="container px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 <div className="space-y-2">
@@ -232,6 +233,7 @@ export default function LandingPage() {
             </div>
           </section>
         </main>
+        <Image src="/image.png" alt="Hero" width={2000} height={500} className="absolute z-0 opacity-5 object-cover h-[800px]"/>
         <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
           <p className="text-xs text-muted-foreground">© 2024 Acme Inc. All rights reserved.</p>
           <nav className="sm:ml-auto flex gap-4 sm:gap-6">

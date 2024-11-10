@@ -1,5 +1,5 @@
-"use client"
-import React, { useState, useEffect, useRef } from 'react';
+"use client";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -8,9 +8,13 @@ import {
   Tooltip,
   Legend,
   TimeScale,
-} from 'chart.js';
-import { CandlestickController, CandlestickElement, OhlcElement } from 'chartjs-chart-financial';
-import 'chartjs-adapter-date-fns';
+} from "chart.js";
+import {
+  CandlestickController,
+  CandlestickElement,
+  OhlcElement,
+} from "chartjs-chart-financial";
+import "chartjs-adapter-date-fns";
 
 ChartJS.register(
   CategoryScale,
@@ -39,27 +43,27 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
       try {
         setLoading(true);
         const apiKey = process.env.NEXT_PUBLIC_FMP_API_KEY;
-        console.log('Fetching data for symbol:', symbol);
-        
+        console.log("Fetching data for symbol:", symbol);
+
         // Get historical daily price data
         const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${symbol}?apikey=${apiKey}`;
         const response = await fetch(url);
         const data = await response.json();
-        
+
         if (!data.historical) {
-          throw new Error('No historical data received from API');
+          throw new Error("No historical data received from API");
         }
 
         // Get the last 30 days of data and reverse to show oldest first
         const last30Days = data.historical.slice(0, 30).reverse();
 
         // Convert data for candlestick chart
-        const candlestickData = last30Days.map(day => ({
+        const candlestickData = last30Days.map((day) => ({
           x: new Date(day.date).getTime(),
           o: day.open,
           h: day.high,
           l: day.low,
-          c: day.close
+          c: day.close,
         }));
 
         // Create/Update chart
@@ -68,30 +72,33 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
             chartRef.current.destroy();
           }
 
-          const ctx = canvasRef.current.getContext('2d');
+          const ctx = canvasRef.current.getContext("2d");
           if (ctx) {
             chartRef.current = new ChartJS(ctx, {
-              type: 'candlestick',
+              type: "candlestick",
               data: {
-                datasets: [{
-                  label: `${symbol} Stock Price`,
-                  data: candlestickData,
-                  color: {
-                    up: '#22c55e', // green
-                    down: '#ef4444', // red
-                  }
-                }]
+                datasets: [
+                  {
+                    label: `${symbol} Stock Price`,
+                    data: candlestickData,
+                    backgroundColors: {
+                      up: "rgba(68, 139, 34,1)",
+                      down: "rgba(255, 4, 34,1)",
+                      unchanged: "rgba(90, 90, 90, 1)",
+                    },
+                  },
+                ],
               },
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'top',
+                    position: "top",
                   },
                   title: {
                     display: true,
-                    text: `${symbol} Stock Price Chart`
+                    text: `${symbol} Stock Price Chart`,
                   },
                   tooltip: {
                     callbacks: {
@@ -101,38 +108,40 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
                           `Open: $${point.o.toFixed(2)}`,
                           `High: $${point.h.toFixed(2)}`,
                           `Low: $${point.l.toFixed(2)}`,
-                          `Close: $${point.c.toFixed(2)}`
+                          `Close: $${point.c.toFixed(2)}`,
                         ];
-                      }
-                    }
-                  }
+                      },
+                    },
+                  },
                 },
                 scales: {
                   x: {
-                    type: 'time',
+                    type: "time",
                     time: {
-                      unit: 'day'
+                      unit: "day",
                     },
                     title: {
                       display: true,
-                      text: 'Date'
-                    }
+                      text: "Date",
+                    },
                   },
                   y: {
                     title: {
                       display: true,
-                      text: 'Price ($)'
-                    }
-                  }
-                }
-              }
+                      text: "Price ($)",
+                    },
+                  },
+                },
+              },
             });
           }
         }
         setError(null);
       } catch (err) {
-        console.error('Error fetching stock data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch stock data');
+        console.error("Error fetching stock data:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch stock data"
+        );
       } finally {
         setLoading(false);
       }
@@ -158,10 +167,10 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
   }
 
   return (
-    <div className="w-full h-[400px] p-4 bg-white rounded-lg shadow">
+    <div className="w-full h-[400px] p-4 bg-white rounded-lg shadow-xl">
       <canvas ref={canvasRef} />
     </div>
   );
 };
 
-export default StockChart; 
+export default StockChart;

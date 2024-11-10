@@ -2,7 +2,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from "next/navigation"
 import { revalidatePath } from 'next/cache'
-import { createStripeCustomer } from '@/utils/stripe/api'
 import { db } from '@/utils/db/db'
 import { usersTable } from '@/utils/db/schema'
 import { eq } from 'drizzle-orm'
@@ -65,14 +64,11 @@ export async function signup(currentState: { message: string }, formData: FormDa
     const user = signUpData.user
     
     // create Stripe Customer Record
-    const stripeID = await createStripeCustomer(user.id, user.email!, "")
     
     // Create record in DB
     await db.insert(usersTable).values({ 
         name: "", 
         email: user.email!, 
-        stripe_id: stripeID, 
-        plan: 'none' 
     })
 
     revalidatePath('/', 'layout')
@@ -160,14 +156,12 @@ export async function handleAuthCallback() {
 
         if (!existingUser.length) {
             // Create Stripe Customer Record
-            const stripeID = await createStripeCustomer(user.id, user.email!, "")
             
             // Create record in DB
             await db.insert(usersTable).values({ 
                 name: user.user_metadata?.full_name || "",
                 email: user.email!,
-                stripe_id: stripeID,
-                plan: 'none' 
+               
             })
 
             revalidatePath('/', 'layout')

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   try {
     const apiKey = process.env.NEXT_PUBLIC_FMP_API_KEY;
     const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/search?query=${query}&apikey=${apiKey}`
+      `https://financialmodelingprep.com/api/v3/profile/${query}?apikey=${apiKey}`
     );
     
     const data = await response.json();

@@ -8,6 +8,7 @@ import { usersTable } from "@/utils/db/schema";
 import { eq } from "drizzle-orm";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { SupabaseProvider } from "../context/SupabaseContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,18 +34,17 @@ export default async function DashboardLayout({
     .select()
     .from(usersTable)
     .where(eq(usersTable.email, user!.email!));
-  if (checkUserInDB[0].plan === "none") {
-    console.log("User has no plan selected");
-    // return redirect('/dashboard')
-  }
+  
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <div className="flex flex-col w-full">
-        <DashboardHeader />
-        <div>{children}</div>
-      </div>
-    </SidebarProvider>
+    <SupabaseProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <div className="flex flex-col w-full">
+          <DashboardHeader />
+          <div>{children}</div>
+        </div>
+      </SidebarProvider>
+    </SupabaseProvider>
   );
 }

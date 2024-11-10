@@ -7,7 +7,6 @@ import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import DashboardHeaderProfileDropdown from "./DashboardHeaderProfileDropdown";
 import { Badge } from "@/components/ui/badge";
-import { getStripePlan } from "@/utils/stripe/api";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "./ui/sidebar";
@@ -52,11 +51,11 @@ export default async function DashboardHeader() {
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link
               className="transition-colors hover:text-foreground/80 text-foreground"
-              href="#"
+              href="/dashboard"
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               className="transition-colors hover:text-foreground/80 text-foreground/60"
               href="#"
             >
@@ -73,7 +72,7 @@ export default async function DashboardHeader() {
               href="#"
             >
               Reports
-            </Link>
+            </Link> */}
           </nav>
         </div>
         <Button variant="outline" size="icon" className="mr-2 md:hidden">
