@@ -1,6 +1,6 @@
 from supabase import create_client, Client
-from ..utils.config import get_settings
-from ..utils.logger import logger
+from src.utils.config import get_settings
+from src.utils.logger import logger
 
 settings = get_settings()
 
@@ -11,8 +11,8 @@ class Database:
         """Initialize Supabase client"""
         logger.info("Connecting to Supabase...")
         self.client = create_client(
-            settings.supabase_url,
-            settings.supabase_key
+            settings.SUPABASE_URL,
+            settings.SUPABASE_KEY
         )
         logger.info("Connected to Supabase!")
     
@@ -23,7 +23,7 @@ class Database:
         logger.info("Supabase connection cleaned up!")
     
     # User operations
-    async def create_user(self, email: str, password: str, username: str):
+    # async def create_user(self, email: str, password: str, username: str):
         """Create a new user"""
         try:
             auth_response = await self.client.auth.sign_up({

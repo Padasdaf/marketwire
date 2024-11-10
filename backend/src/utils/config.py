@@ -3,16 +3,27 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Supabase settings
-    supabase_key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13dGlmYWdoanFibHlrcmhxdHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA3ODU0NzAsImV4cCI6MjA0NjM2MTQ3MH0.9sItFVLjb54T0bSO1QE97NxnF6Ob1vzFwdl1nQT2JsE"
-    supabase_url: str = "https://mwtifaghjqblykrhqtzq.supabase.co"
-    
-    # # Celery settings
+    SUPABASE_KEY: str 
+    SUPABASE_URL: str 
+
+    SENTIMENT_THRESHOLD_POSITIVE: float = 0.7
+    SENTIMENT_THRESHOLD_NEGATIVE: float = -0.7
+    LOG_LEVEL: str = "INFO"
     # celery_broker_url: str = "redis://localhost:6379/0"
     # celery_result_backend: str = "redis://localhost:6379/0"
 
+    @property
+    def sentiment_threshold_positive(self) -> float:
+        return self.SENTIMENT_THRESHOLD_POSITIVE
+        
+    @property
+    def sentiment_threshold_negative(self) -> float:
+        return self.SENTIMENT_THRESHOLD_NEGATIVE
+
     class Config:
         env_file = ".env"
+        case_sensitive = True
 
 @lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()

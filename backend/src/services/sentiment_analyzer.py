@@ -114,5 +114,4 @@ class SentimentAnalyzer:
         except Exception as e:
             logger.error(f"Error in _check_and_generate_alerts: {str(e)}")
 
-# Create analyzer instance
 sentiment_analyzer = SentimentAnalyzer()
