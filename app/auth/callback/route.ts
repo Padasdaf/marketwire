@@ -25,7 +25,12 @@ export async function GET(request: Request) {
             if (!isUserInDB) {
                 // create Stripe customers
                 // Create record in DB
-                await db.insert(usersTable).values({ name: user!.user_metadata.full_name, email: user!.email!})
+                await db.insert(usersTable).values({ 
+                    name: user!.user_metadata.full_name, 
+                    email: user!.email!,
+                    plan: 'default_plan',
+                    stripe_id: 'default_stripe_id'
+                })
             }
 
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
