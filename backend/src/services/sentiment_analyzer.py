@@ -1,7 +1,7 @@
 from transformers import pipeline
-from ..database import db
-from ..utils.logger import logger
-from ..utils.config import get_settings
+from src.models.database import db
+from src.utils.logger import logger
+from src.utils.config import get_settings
 from datetime import datetime, timedelta
 
 settings = get_settings()
@@ -114,5 +114,4 @@ class SentimentAnalyzer:
         except Exception as e:
             logger.error(f"Error in _check_and_generate_alerts: {str(e)}")
 
-# Create analyzer instance
 sentiment_analyzer = SentimentAnalyzer()

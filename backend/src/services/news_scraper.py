@@ -1,11 +1,11 @@
 import aiohttp
 import asyncio
 from datetime import datetime, timedelta
-from newspaper import Article
+from newspaper import Article 
 from bs4 import BeautifulSoup
-from ..utils.logger import logger
-from ..models.schemas import Article as ArticleSchema
-from ..utils.config import get_settings
+from src.utils.logger import logger
+from src.models.schemas import Article as ArticleSchema
+from src.utils.config import get_settings
 from typing import List, Dict
 import json
 
@@ -133,6 +133,104 @@ class NewsScraperService:
         
         return articles
 
+    async def _scrape_bloomberg(self, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Scrape news from Bloomberg."""
+        articles = []
+        url = f"https://www.bloomberg.com/search?query={company_symbol}"
+        
+        try:
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    news_items = soup.find_all('div', {'class': 'search-result-story__headline'})
+
+                    for item in news_items:
+                        link = item.find('a')
+                        if link and link.get('href'):
+                            article_url = f"https://www.bloomberg.com{link['href']}"
+                            article = await self._parse_article(article_url)
+                            if article:
+                                articles.append(article)
+
+        except Exception as e:
+            logger.error(f"Error scraping Bloomberg: {str(e)}")
+
+        return articles
+
+    async def _scrape_financial_times(self, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Scrape news from Financial Times."""
+        articles = []
+        url = f"https://www.ft.com/search?q={company_symbol}"
+        
+        try:
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    news_items = soup.find_all('a', {'class': 'js-teaser-heading-link'})
+
+                    for item in news_items:
+                        article_url = f"https://www.ft.com{item['href']}"
+                        article = await self._parse_article(article_url)
+                        if article:
+                            articles.append(article)
+
+        except Exception as e:
+            logger.error(f"Error scraping Financial Times: {str(e)}")
+
+        return articles
+
+    async def _scrape_wsj(self, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Scrape news from The Wall Street Journal."""
+        articles = []
+        url = f"https://www.wsj.com/search?query={company_symbol}&mod=searchresults_viewallresults"
+        
+        try:
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    news_items = soup.find_all('article', {'class': 'WSJTheme--story--XB4V2mLz'})
+
+                    for item in news_items:
+                        link = item.find('a')
+                        if link and link.get('href'):
+                            article_url = link['href']
+                            article = await self._parse_article(article_url)
+                            if article:
+                                articles.append(article)
+
+        except Exception as e:
+            logger.error(f"Error scraping WSJ: {str(e)}")
+
+        return articles
+
+    async def _scrape_cnbc(self, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Scrape news from CNBC."""
+        articles = []
+        url = f"https://www.cnbc.com/search/?query={company_symbol}"
+
+        try:
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    news_items = soup.find_all('div', {'class': 'SearchResultCard'})
+
+                    for item in news_items:
+                        link = item.find('a')
+                        if link and link.get('href'):
+                            article_url = link['href']
+                            article = await self._parse_article(article_url)
+                            if article:
+                                articles.append(article)
+
+        except Exception as e:
+            logger.error(f"Error scraping CNBC: {str(e)}")
+
+        return articles
+    
     async def _parse_article(self, url: str) -> ArticleSchema:
         """
         Parse article content using newspaper3k

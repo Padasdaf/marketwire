@@ -2,26 +2,28 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 class Settings(BaseSettings):
-    # Database settings
-    supabase_url: str
-    mongodb_db_name: str
-    redis_url: str
-    
-    # API settings
-    api_secret_key: str
-    environment: str
-    
-    # Service settings
-    news_api_key: str
-    sentiment_threshold_positive: float
-    sentiment_threshold_negative: float
-    
-    # Logging
-    log_level: str
+    # Supabase settings
+    SUPABASE_KEY: str 
+    SUPABASE_URL: str 
+
+    SENTIMENT_THRESHOLD_POSITIVE: float = 0.7
+    SENTIMENT_THRESHOLD_NEGATIVE: float = -0.7
+    LOG_LEVEL: str = "INFO"
+    # celery_broker_url: str = "redis://localhost:6379/0"
+    # celery_result_backend: str = "redis://localhost:6379/0"
+
+    @property
+    def sentiment_threshold_positive(self) -> float:
+        return self.SENTIMENT_THRESHOLD_POSITIVE
+        
+    @property
+    def sentiment_threshold_negative(self) -> float:
+        return self.SENTIMENT_THRESHOLD_NEGATIVE
 
     class Config:
         env_file = ".env"
+        case_sensitive = True
 
 @lru_cache()
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
