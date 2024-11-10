@@ -1,5 +1,6 @@
 "use client";
 import { StockInfoSkeleton } from "@/components/StockInfoSkeleton";
+import StockNews, { StockArticles } from "@/components/StockNews";
 import StockChart from "@/components/Stocks/StockChart";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -49,10 +50,23 @@ interface StockData {
 const StockSlugPage = ({ params }: any) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<StockData>();
+  const [articleData, setArticles] = useState<StockArticles[]>([]);
   const slug = params.stock;
 
   useEffect(() => {
     setLoading(true); // Set loading to true when search starts
+    const fetchArticleData = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/news?symbol=${slug}`);
+        const articleData = await response.json();
+        setArticles(articleData);
+        console.log("Article data fetched:", articleData);
+      } catch (error) {
+        console.error("Error fetching article data:", error);
+      }
+    };
+    fetchArticleData();
+    
     const fetchData = async () => {
       try {
         const response = await fetch(
@@ -109,6 +123,7 @@ const StockSlugPage = ({ params }: any) => {
             <CardContent className="text-sm">{data?.description}</CardContent>
           </Card>
         </div>
+        <StockNews articles={articleData}/>
       </div>
     </>
   ) : (
