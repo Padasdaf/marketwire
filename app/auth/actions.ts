@@ -69,6 +69,8 @@ export async function signup(currentState: { message: string }, formData: FormDa
     await db.insert(usersTable).values({ 
         name: "", 
         email: user.email!, 
+        plan: "default_plan",
+        stripe_id: "default_stripe_id"
     })
 
     revalidatePath('/', 'layout')
@@ -161,7 +163,8 @@ export async function handleAuthCallback() {
             await db.insert(usersTable).values({ 
                 name: user.user_metadata?.full_name || "",
                 email: user.email!,
-               
+                plan: "default_plan",
+                stripe_id: "default_stripe_id"
             })
 
             revalidatePath('/', 'layout')
