@@ -17,10 +17,10 @@ Receive timely notifications and sentiment analysis on trending companies in the
 ## 📣 Why Choose MarketWire?
 
 With MarketWire, you gain access to insights once reserved for elite investors like Warren Buffet. Our platform brings together market data, personalized stock recommendations, and insightful company news analysis—all in an intuitive, user-friendly interface.
-
+ 
 	“MarketWire empowers investors to make smart, data-driven decisions in today’s dynamic financial landscape.”
 
-🚀 Get Started Today!
+🚀 Get Startedd Today!
 
 	1.	Create your profile and set your stock preferences.
 	2.	Explore market trends and start building your portfolio.
