@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Star, Check, BriefcaseBusiness, UserCheck, Database, MessageSquareDot } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import Logo from '../public/Marketwire.svg'
 export default function LandingPage() {
   return (
     
@@ -51,7 +52,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="w-full pl-2 flex justify-center ">
-                <Image src="/MarketWire.svg" alt="Hero" width={500} height={500} className="" unoptimized />
+                <Logo  width={500} height={500} className=""  />
               </div>
             </div>
           </section>
