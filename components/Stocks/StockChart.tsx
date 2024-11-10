@@ -68,74 +68,83 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
           c: day.close,
         }));
 
-        // Create/Update chart
+        // Ensure the canvas is visible and has dimensions
         if (canvasRef.current) {
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-
           const ctx = canvasRef.current.getContext("2d");
           if (ctx) {
-            chartRef.current = new ChartJS(ctx, {
-              type: "candlestick",
-              data: {
-                datasets: [
-                  {
-                    label: `${symbol} Stock Price`,
-                    data: candlestickData,
-                    backgroundColors: {
-                      up: "rgba(68, 139, 34,1)",
-                      down: "rgba(255, 4, 34,1)",
-                      unchanged: "rgba(90, 90, 90, 1)",
+            try {
+              // Create/Update chart only if data is available
+              if (candlestickData.length > 0) {
+                if (chartRef.current) {
+                  chartRef.current.destroy();
+                }
+
+                chartRef.current = new ChartJS(ctx, {
+                  type: "candlestick",
+                  data: {
+                    datasets: [
+                      {
+                        label: `${symbol} Stock Price`,
+                        data: candlestickData,
+                        backgroundColors: {
+                          up: "rgba(68, 139, 34,1)",
+                          down: "rgba(255, 4, 34,1)",
+                          unchanged: "rgba(90, 90, 90, 1)",
+                        },
+                      },
+                    ],
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "top",
+                      },
+                      title: {
+                        display: true,
+                        text: `${symbol} Stock Price Chart`,
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: (context: any) => {
+                            const point = context.raw;
+                            return [
+                              `Open: $${point.o.toFixed(2)}`,
+                              `High: $${point.h.toFixed(2)}`,
+                              `Low: $${point.l.toFixed(2)}`,
+                              `Close: $${point.c.toFixed(2)}`,
+                            ];
+                          },
+                        },
+                      },
                     },
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: "top",
-                  },
-                  title: {
-                    display: true,
-                    text: `${symbol} Stock Price Chart`,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: (context: any) => {
-                        const point = context.raw;
-                        return [
-                          `Open: $${point.o.toFixed(2)}`,
-                          `High: $${point.h.toFixed(2)}`,
-                          `Low: $${point.l.toFixed(2)}`,
-                          `Close: $${point.c.toFixed(2)}`,
-                        ];
+                    scales: {
+                      x: {
+                        type: "time",
+                        time: {
+                          unit: "day",
+                        },
+                        title: {
+                          display: true,
+                          text: "Date",
+                        },
+                      },
+                      y: {
+                        title: {
+                          display: true,
+                          text: "Price ($)",
+                        },
                       },
                     },
                   },
-                },
-                scales: {
-                  x: {
-                    type: "time",
-                    time: {
-                      unit: "day",
-                    },
-                    title: {
-                      display: true,
-                      text: "Date",
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: "Price ($)",
-                    },
-                  },
-                },
-              },
-            });
+                });
+              } else {
+                console.error("No candlestick data available for rendering.");
+              }
+            } catch (error) {
+              console.error("Error creating chart:", error);
+            }
           }
         }
         setError(null);
