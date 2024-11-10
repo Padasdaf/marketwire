@@ -18,10 +18,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    
     <html lang="en">
+
       {/* Required for pricing table */}
         {" "}
         <body className={inter.className}>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
         {children}</body>
     </html>
   );
