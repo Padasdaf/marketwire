@@ -179,7 +179,7 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
 
   return (
     <div className="w-full h-[400px] p-4 bg-white rounded-lg shadow-xl">
-      <canvas ref={canvasRef} />
+      <canvas id="myChart" ref={canvasRef} />
     </div>
   );
 };
