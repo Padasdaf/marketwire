@@ -51,7 +51,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="w-full pl-2 flex justify-center ">
-                <Image src="/MarketWire.svg" alt="Hero" width={500} height={500} className="" />
+                <img src="/MarketWire.svg" alt="Hero" width={500} height={500} className="" />
               </div>
             </div>
           </section>
