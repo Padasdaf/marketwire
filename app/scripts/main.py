@@ -23,7 +23,7 @@ def scrape_yahoo_finance_news_with_titles(company_symbol: str):
     articles = []
     url = f"https://finance.yahoo.com/quote/{company_symbol}/"
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Brave/1.29.76'
     }
 
     response = requests.get(url, headers=headers)
