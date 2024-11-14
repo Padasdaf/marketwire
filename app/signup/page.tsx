@@ -12,7 +12,7 @@ export default function Signup() {
                 <CardHeader className="space-y-1">
                     <div className="flex justify-center py-4">
                         <Link href='/'>
-                            <Image src="/logo.png" alt="logo" width={50} height={50} />
+                            <Image src="/Marketwire.svg" alt="logo" width={50} height={50} />
                         </Link>
                     </div>
 

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 // The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server'
-import { createStripeCustomer } from '@/utils/stripe/api'
 import { db } from '@/utils/db/db'
 import { usersTable } from '@/utils/db/schema'
 import { eq } from "drizzle-orm";
@@ -25,9 +24,13 @@ export async function GET(request: Request) {
             const isUserInDB = checkUserInDB.length > 0 ? true : false
             if (!isUserInDB) {
                 // create Stripe customers
-                const stripeID = await createStripeCustomer(user!.id, user!.email!, user!.user_metadata.full_name)
                 // Create record in DB
-                await db.insert(usersTable).values({ name: user!.user_metadata.full_name, email: user!.email!, stripe_id: stripeID, plan: 'none' })
+                await db.insert(usersTable).values({ 
+                    name: user!.user_metadata.full_name, 
+                    email: user!.email!,
+                    plan: 'default_plan',
+                    stripe_id: 'default_stripe_id'
+                })
             }
 
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
