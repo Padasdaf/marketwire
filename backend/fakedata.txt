@@ -56,3 +56,15 @@ GET /api/alerts
 POST /api/alerts/settings
 - Update alert thresholds
 - Configure notification preferences
+
+the tables in supabase are:
+
+1)companies with columns: id uuid,price numeric,name text, symbol text,created_at timestamptz,user_id int4
+
+2)news_articles with columns:id uuid,company_symbol text, title text, content text, url text,source text,publish_date timestamptz, sentiment_score float8, sentiment_label text, created_at timestamptz.
+
+3)sentiment_alerts with columns: id uuid,user_id uuid,company_symbol text, sentiment_score float8, alert_type text, is_read bool, created_at timestamptz
+
+4)user_company_preferences with columns: id uuid,user_id uuid, company_symbol text,created_at timestamptz
+
+5)users_table with columns: id uuid, name text, email text,plan text, stripe text 

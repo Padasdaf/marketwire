@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     # celery_broker_url: str = "redis://localhost:6379/0"
     # celery_result_backend: str = "redis://localhost:6379/0"
+    ALPHA_VANTAGE_API_KEY: str
+    MARKETAUX_API_KEY: str
+    FINNHUB_API_KEY: str
 
     @property
     def sentiment_threshold_positive(self) -> float:

@@ -3,7 +3,7 @@ import asyncio
 from functools import wraps
 
 class RateLimiter:
-    def __init__(self, max_concurrent=5):
+    def __init__(self, max_concurrent=10):
         self._semaphore = asyncio.Semaphore(max_concurrent)
 
     async def acquire(self):

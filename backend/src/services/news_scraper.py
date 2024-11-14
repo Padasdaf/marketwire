@@ -1,14 +1,17 @@
-import aiohttp
+import httpx
 import asyncio
-from datetime import datetime, timedelta
-from newspaper import Article
 from bs4 import BeautifulSoup
+from newspaper import Article
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional
 from src.utils.logger import logger
 from src.models.schemas import Article as ArticleSchema
 from src.utils.config import get_settings
-from typing import List, Dict, Optional
 import json
 from src.services.rate_limiter import RateLimiter, rate_limited
+from src.services.sentiment_analyzer import sentiment_analyzer, SentimentAnalyzer
+import aiohttp
+from src.services.supabase_client_service import supabase
 
 settings = get_settings()
 
@@ -17,34 +20,140 @@ class NewsScraperService:
         self.session = None
         self.rate_limiter = RateLimiter(max_concurrent=5)
         self.cache = {}
+        self.sentiment_analyzer = SentimentAnalyzer()
+        
+        # Define headers for each service
         self.headers = {
-            # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Connection': 'keep-alive'
+            'alpha_vantage': {
+                'User-Agent': 'Stock Sentiment Analysis/1.0',
+                'Accept': 'application/json'
+            },
+            'marketaux': {
+                'User-Agent': 'Stock Sentiment Analysis/1.0',
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {settings.MARKETAUX_API_KEY}'
+            },
+            'finnhub': {
+                'User-Agent': 'Stock Sentiment Analysis/1.0',
+                'Accept': 'application/json',
+                'X-Finnhub-Token': settings.FINNHUB_API_KEY
+            },
+            'yahoo_finance': {
+                'User-Agent': 'Mozilla/5.0',
+                'Accept': 'application/json'
+            }
         }
-        self.max_content_length = 500000  # 500KB limit
+
+        # Define news sources
+        self.news_sources = {
+            'alpha_vantage': {
+                'base_url': 'https://www.alphavantage.co/query',
+                'params': lambda symbol: {
+                    'function': 'NEWS_SENTIMENT',
+                    'tickers': symbol,
+                    'apikey': settings.ALPHA_VANTAGE_API_KEY
+                }
+            },
+            'marketaux': {
+                'base_url': 'https://api.marketaux.com/v1/news/all',
+                'params': lambda symbol: {
+                    'symbols': symbol,
+                    'api_token': settings.MARKETAUX_API_KEY
+                }
+            },
+            'finnhub': {
+                'base_url': 'https://finnhub.io/api/v1/company-news',
+                'params': lambda symbol: {
+                    'symbol': symbol,
+                    'from': (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d'),
+                    'to': datetime.utcnow().strftime('%Y-%m-%d'),
+                    'token': settings.FINNHUB_API_KEY
+                }
+            },
+            'yahoo_finance': {
+                'base_url': 'https://query2.finance.yahoo.com/v1/finance/search',
+                'params': lambda symbol: {
+                    'q': symbol,
+                    'newsCount': '20'
+                }
+            }
+        }
 
     async def initialize(self):
-        """Initialize aiohttp session with optimized settings"""
-        if self.session is None:
-            timeout = aiohttp.ClientTimeout(total=30, connect=10)
-            connector = aiohttp.TCPConnector(
-                force_close=True,
-                limit=10,
-                ttl_dns_cache=300,
-                # max_header_size=16384
+        """Initialize the scraper with database connection and session"""
+        try:
+            # Initialize database connection
+            self.db = supabase
+            
+            # Initialize HTTP session with proper headers
+            default_headers = {
+                'User-Agent': 'Stock Sentiment Analysis/1.0',
+                'Accept': 'application/json'
+            }
+            
+            self.session = httpx.AsyncClient(
+                timeout=30.0,
+                headers=default_headers,
+                follow_redirects=True
             )
-            self.session = aiohttp.ClientSession(
-                headers=self.headers,
-                timeout=timeout,
-                connector=connector
-            )
+            
+            logger.info("NewsScraperService initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing NewsScraperService: {str(e)}")
+            raise e
+
+    @rate_limited
+    async def _fetch_article_content_with_retry(self, url: str, max_retries: int = 3) -> Optional[str]:
+        """Improved article content fetching using httpx"""
+        if not url:
+            return None
+
+        for attempt in range(max_retries):
+            try:
+                response = await self.session.get(url)
+                if response.status_code == 200:
+                    html = response.text
+                    
+                    # Try using newspaper3k first
+                    try:
+                        article = Article(url)
+                        article.download_state = 2
+                        article.html = html
+                        article.parse()
+                        content = article.text
+                        if content and len(content.strip()) >= 50:
+                            return content[:self.max_content_length]
+                    except Exception as e:
+                        logger.debug(f"newspaper3k parsing failed: {str(e)}")
+
+                    # Fall back to BeautifulSoup
+                    try:
+                        soup = BeautifulSoup(html, 'html.parser')
+                        paragraphs = soup.find_all('p')
+                        content = ' '.join([p.get_text(strip=True) for p in paragraphs])
+                        if content and len(content.strip()) >= 50:
+                            return content[:self.max_content_length]
+                    except Exception as e:
+                        logger.debug(f"BeautifulSoup parsing failed: {str(e)}")
+
+                elif response.status_code in [429, 503, 502, 404]:
+                    wait_time = 2 ** attempt
+                    await asyncio.sleep(wait_time)
+                    continue
+
+            except Exception as e:
+                logger.error(f"Attempt {attempt + 1} failed for {url}: {str(e)}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                continue
+
+        return None
 
     async def close(self):
-        """Close aiohttp session"""
+        """Close httpx session"""
         if self.session:
-            await self.session.close()
+            await self.session.aclose()
             self.session = None
 
     def _get_cached_news(self, company_symbol: str, days_back: int) -> Optional[List[ArticleSchema]]:
@@ -61,71 +170,70 @@ class NewsScraperService:
         cache_key = f"{company_symbol}_{days_back}"
         self.cache[cache_key] = (datetime.now(), articles)
 
-    @rate_limited
     async def fetch_company_news(self, company_symbol: str, days_back: int = 7) -> List[ArticleSchema]:
-        """Fetch news articles for a company with improved error handling and caching"""
+        """Fetch news from multiple sources with detailed logging"""
         try:
-            # Check cache first
             cached_news = self._get_cached_news(company_symbol, days_back)
             if cached_news:
+                logger.info("Returning cached news")
                 return cached_news
 
             await self.initialize()
+            all_articles = []
             
-            params = {
-                'q': str(company_symbol),
-                'newsCount': '10',
-                'enableFuzzyQuery': 'false',
-                'newsQueryId': 'news_cie_vespa',
-            }
-
-            base_url = "https://query1.finance.yahoo.com/v1/finance/search"
-
-            async with self.session.get(base_url, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    news_items = data.get('news', [])
-                    
-                    articles = []
-                    cutoff_date = datetime.utcnow() - timedelta(days=days_back)
-                    
-                    for item in news_items:
-                        try:
-                            publish_timestamp = item.get('providerPublishTime')
-                            if not publish_timestamp:
-                                continue
-                                
-                            publish_date = datetime.fromtimestamp(publish_timestamp)
-                            if publish_date < cutoff_date:
-                                continue
-
-                            content = await self._fetch_article_content_with_retry(item.get('link', ''))
-                            
-                            if not content:
-                                continue
-
-                            article = ArticleSchema(
-                                url=item.get('link', ''),
-                                title=item.get('title', ''),
-                                content=content,
-                                publish_date=publish_date,
-                                source=item.get('publisher', ''),
-                                company_symbol=company_symbol,
-                                sentiment_score=None,
-                                sentiment_label=None
-                            )
-                            articles.append(article)
-                            logger.info(f"Successfully parsed article: {article.title}")
-                        except Exception as e:
-                            logger.error(f"Error parsing single article: {str(e)}")
-                            continue
-
-                    # Cache the results before returning
-                    self._cache_news(company_symbol, days_back, articles)
-                    return articles
+            # Create aiohttp session if not exists
+            if not self.session:
+                self.session = aiohttp.ClientSession()
+            
+            logger.info(f"Fetching news for {company_symbol} from multiple sources")
+            
+            # Fetch from all sources concurrently
+            tasks = []
+            for source_name, source_config in self.news_sources.items():
+                logger.info(f"Creating task for {source_name}")
+                url = source_config['base_url']
+                params = source_config['params'](company_symbol)
+                headers = self.headers.get(source_name, self.headers['yahoo_finance'])
+                
+                logger.info(f"{source_name} request details:")
+                logger.info(f"URL: {url}")
+                logger.info(f"Params: {params}")
+                logger.info(f"Headers: {headers}")
+                
+                task = asyncio.create_task(self._fetch_from_source(
+                    source_name,
+                    source_config,
+                    company_symbol,
+                    days_back
+                ))
+                tasks.append(task)
+            
+            # Wait for all sources
+            logger.info(f"Waiting for {len(tasks)} tasks to complete")
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results with better error handling
+            for idx, source_articles in enumerate(results):
+                source_name = list(self.news_sources.keys())[idx]
+                if isinstance(source_articles, Exception):
+                    logger.error(f"Error from {source_name}: {str(source_articles)}")
+                    continue
+                elif isinstance(source_articles, list):
+                    logger.info(f"Got {len(source_articles)} articles from {source_name}")
+                    all_articles.extend(source_articles)
                 else:
-                    logger.error(f"Failed to fetch news: Status {response.status}")
-                    return []
+                    logger.warning(f"Unexpected result type from {source_name}: {type(source_articles)}")
+            
+            # Sort by date and limit to most recent
+            all_articles.sort(key=lambda x: x.publish_date, reverse=True)
+            all_articles = all_articles[:20]  # Limit to 20 most recent articles
+            
+            logger.info(f"Total articles collected: {len(all_articles)}")
+            
+            if all_articles:
+                self._cache_news(company_symbol, days_back, all_articles)
+            
+            return all_articles
 
         except Exception as e:
             logger.error(f"Error in fetch_company_news: {str(e)}")
@@ -133,70 +241,164 @@ class NewsScraperService:
         finally:
             await self.close()
 
-    @rate_limited
-    async def _fetch_article_content_with_retry(self, url: str, max_retries: int = 3) -> Optional[str]:
-        """Fetch article content with retry mechanism and better error handling"""
-        if not url:
-            return None
+    async def _fetch_from_source(self, source_name: str, source_config: Dict, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Fetch news from a specific source with detailed logging"""
+        try:
+            if not self.session:
+                await self.initialize()
 
-        for attempt in range(max_retries):
+            params = source_config['params'](company_symbol)
+            url = source_config['base_url']
+            
+            # Get source-specific headers
+            headers = self.headers.get(source_name, {}).copy()
+            
+            logger.info(f"=== Fetching from {source_name} ===")
+            logger.info(f"URL: {url}")
+            logger.info(f"Params: {params}")
+            logger.info(f"Headers: {headers}")
+
+            response = await self.session.get(
+                url,
+                params=params,
+                headers=headers,
+                follow_redirects=True
+            )
+            
+            logger.info(f"{source_name} status code: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    logger.info(f"{source_name} response received. First 200 chars: {str(data)[:200]}")
+                    
+                    if source_name == 'alpha_vantage':
+                        return await self._process_alpha_vantage(data, company_symbol)
+                    elif source_name == 'marketaux':
+                        return await self._process_marketaux(data, company_symbol)
+                    elif source_name == 'finnhub':
+                        return await self._process_finnhub(data, company_symbol)
+                    elif source_name == 'yahoo_finance':
+                        return await self._process_yahoo_finance(data, company_symbol)
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON from {source_name}: {str(e)}")
+                    logger.error(f"Raw response: {response.text[:200]}")
+            else:
+                logger.error(f"Error response from {source_name}: Status {response.status_code}")
+                logger.error(f"Error details: {response.text[:200]}")
+        
+            return []
+
+        except Exception as e:
+            logger.error(f"Exception while fetching from {source_name}: {str(e)}")
+            logger.exception(e)
+            return []
+
+    # Add processing methods for each source
+    async def _process_yahoo_finance(self, data: Dict, company_symbol: str, days_back: int) -> List[ArticleSchema]:
+        """Process Yahoo Finance response"""
+        # Existing Yahoo Finance processing code...
+
+    async def _process_alpha_vantage(self, data: Dict, company_symbol: str) -> List[ArticleSchema]:
+        """Process Alpha Vantage response"""
+        articles = []
+        try:
+            feed_data = data.get('feed', [])
+            logger.info(f"Processing {len(feed_data)} articles from Alpha Vantage")
+            
+            for item in feed_data:
+                try:
+                    # Convert timestamp to datetime
+                    publish_date = datetime.strptime(
+                        item.get('time_published', ''), 
+                        '%Y%m%dT%H%M%S'
+                    )
+                    
+                    article = ArticleSchema(
+                        url=item.get('url', ''),
+                        title=item.get('title', ''),
+                        content=item.get('summary', ''),
+                        publish_date=publish_date,
+                        source='Alpha Vantage',
+                        company_symbol=company_symbol,
+                        sentiment_score=float(item.get('overall_sentiment_score', 0)),
+                        sentiment_label=item.get('overall_sentiment_label', 'neutral')
+                    )
+                    articles.append(article)
+                except Exception as e:
+                    logger.error(f"Error processing Alpha Vantage article: {str(e)}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Error in Alpha Vantage processing: {str(e)}")
+        return articles
+
+    async def _process_marketaux(self, data: Dict, company_symbol: str) -> List[ArticleSchema]:
+        """Process Marketaux response"""
+        articles = []
+        try:
+            news_data = data.get('data', [])
+            logger.info(f"Processing {len(news_data)} articles from Marketaux")
+            
+            for item in news_data:
+                try:
+                    publish_date = datetime.strptime(
+                        item.get('published_at', ''), 
+                        '%Y-%m-%dT%H:%M:%S.%fZ'
+                    )
+                    
+                    content = item.get('description', '')
+                    
+                    # Unpack the tuple returned by analyze_text
+                    sentiment_label, sentiment_score = sentiment_analyzer.analyze_text(content)
+                    
+                    article = ArticleSchema(
+                        url=item.get('url', ''),
+                        title=item.get('title', ''),
+                        content=content,
+                        publish_date=publish_date,
+                        source=item.get('source', 'Marketaux'),
+                        company_symbol=company_symbol,
+                        sentiment_score=float(sentiment_score),  # Convert score to float
+                        sentiment_label=str(sentiment_label)     # Convert label to string
+                    )
+                    articles.append(article)
+                    logger.info(f"Processed article with sentiment: {sentiment_score}, {sentiment_label}")
+                except Exception as e:
+                    logger.error(f"Error processing Marketaux article: {str(e)}")
+                    continue
+        except Exception as e:
+            logger.error(f"Error in Marketaux processing: {str(e)}")
+        return articles
+
+    async def _process_finnhub(self, data: List, company_symbol: str) -> List[ArticleSchema]:
+        """Process Finnhub response"""
+        articles = []
+        for item in data:
             try:
-                # Use a fresh session for each attempt to avoid header issues
-                async with aiohttp.ClientSession(headers=self.headers) as temp_session:
-                    async with temp_session.get(
-                        url,
-                        allow_redirects=True,
-                        timeout=30,
-                        
-                    ) as response:
-                        if response.status == 200:
-                            content_length = int(response.headers.get('content-length', 0))
-                            if content_length > self.max_content_length:
-                                logger.warning(f"Content too large ({content_length} bytes) for {url}")
-                                return None
-
-                            # Read content in chunks
-                            chunks = []
-                            async for chunk in response.content.iter_chunked(8192):
-                                chunks.append(chunk)
-                            
-                            html = b''.join(chunks).decode('utf-8', errors='ignore')
-                            if not html:
-                                continue
-
-                            article = Article(url)
-                            article.download_state = 2
-                            article.html = html
-                            article.parse()
-                            
-                            content = article.text
-                            if not content or len(content.strip()) < 50:
-                                continue
-                                
-                            return content[:100000]
-                            
-                        elif response.status in [429, 503]:
-                            wait_time = 2 ** attempt
-                            await asyncio.sleep(wait_time)
-                            continue
-                        
-                        else:
-                            logger.error(f"Failed to fetch article: Status {response.status} for {url}")
-                            return None
-
-            # except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            #     logger.error(f"Network error fetching article (attempt {attempt + 1}): {str(e)}")
-            #     if attempt < max_retries - 1:
-            #         await asyncio.sleep(2 ** attempt)
-            #     continue
-            except aiohttp.ClientResponseError as e:
-                if "Header value is too long" in str(e):
-                    logger.error(f"Header too long error on attempt {attempt + 1}: {url}")
-                    continue  # Retry without certain headers or with adjusted logic
-
+                publish_date = datetime.fromtimestamp(item.get('datetime', 0))
+                content = item.get('summary', '')
+                
+                # Ensure we have content to analyze
+                if not content:
+                    content = item.get('headline', '') or item.get('title', '')
+                
+                # Use analyze_text instead of analyze
+                sentiment_label, sentiment_score = self.sentiment_analyzer.analyze_text(content)
+                
+                article = ArticleSchema(
+                    url=item.get('url', ''),
+                    title=item.get('headline', '') or item.get('title', ''),
+                    content=content,
+                    publish_date=publish_date,
+                    source=item.get('source', 'Finnhub'),
+                    company_symbol=company_symbol,
+                    sentiment_score=float(sentiment_score) if sentiment_score is not None else None,
+                    sentiment_label=str(sentiment_label) if sentiment_label is not None else None
+                )
+                articles.append(article)
             except Exception as e:
-                logger.error(f"Unexpected error fetching article: {str(e)}")
-                return None
-
-        logger.error(f"Failed to fetch article after {max_retries} attempts: {url}")
-        return None
+                logger.error(f"Error processing Finnhub article: {str(e)}")
+                continue
+        return articles
