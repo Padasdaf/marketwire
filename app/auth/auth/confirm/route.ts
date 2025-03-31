@@ -20,7 +20,15 @@ export async function GET(request: NextRequest) {
         if (!error) {
             // redirect user to specified redirect URL or root of app
             redirect(next)
+        } else {
+            // Handle the error case more gracefully
+            // You might want to log the error or provide feedback to the user
+            console.error('Error verifying OTP:', error)
+            redirect('/error') // Redirect to error page if OTP verification fails
         }
+    } else {
+        // Redirect to error page if token_hash or type is missing
+        redirect('/error')
     }
 
     // redirect the user to an error page with some instructions

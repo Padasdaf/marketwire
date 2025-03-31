@@ -13,11 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { StockSkeleton } from "./StockSkeleton";
-import { db } from "@/utils/db/db";
-import { usersTable } from "@/utils/db/schema";
-import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid"; // Import uuid
-import { PgNumeric } from "drizzle-orm/pg-core";
 
 export const StockSearch = () => {
   const supabase = useSupabase(); // Get the Supabase client
@@ -36,7 +32,6 @@ export const StockSearch = () => {
       const limitedResults = data.response.slice(0, 20);
       console.log(limitedResults);
       setSearchResults(limitedResults);
-      setQuery(''); // Clear the query input after submission
     } catch (error) {
       console.error("Error searching stocks:", error);
     } finally {
@@ -61,7 +56,6 @@ export const StockSearch = () => {
       .eq("email", user.email);
     const userId =
       user_data.data && user_data.data.length > 0 ? user_data.data[0].id : null; // Ensure user_data.data is not empty
-    console.log(userId);
     const companyId = uuidv4();
     const response = await fetch(
       `https://financialmodelingprep.com/api/v3/quote-short/${symbol}?apikey=${process.env.NEXT_PUBLIC_FMP_API_KEY}`
@@ -98,9 +92,6 @@ export const StockSearch = () => {
       setOpen(false); // Close the dialog after selection
     }
   };
-  useEffect(() => {
-    // Cleanup on unmount or query change
-  }, [query]);
 
   return (
     <>
@@ -117,11 +108,11 @@ export const StockSearch = () => {
           <CommandInput
             placeholder="Search stocks..."
             onValueChange={(event) => {
-                setQuery(event)}}
-            
+              setQuery(event);
+            }}
           />
           <Button
-            onClick={()=>handleSearch(query)}
+            onClick={() => handleSearch(query)} // Call handleSearch with the current query
             className="h-9 fixed -right-0  -top-0 dark:bg-black m-2"
           >
             Submit
@@ -139,9 +130,10 @@ export const StockSearch = () => {
                 {searchResults.map((result, index) => (
                   <CommandItem
                     key={index}
-                    onSelect={() =>
-                      handleStockSelect(result.symbol, result.name)
-                    } // Call the new function
+                    onSelect={() => {
+                      handleStockSelect(result.symbol, result.name);
+                    }}
+                    className="hover:cursor-pointer"
                   >
                     <div className="flex flex-col">
                       <span>{result?.symbol}</span>

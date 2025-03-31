@@ -119,6 +119,9 @@ export async function signInWithGoogle() {
     if (data.url) {
         redirect(data.url)
     }
+    if(error){
+        console.log(error)
+    }
 }
 
 export async function signInWithGithub() {

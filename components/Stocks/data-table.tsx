@@ -32,7 +32,6 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
-
   return (
     <div className="rounded-md border shadow-xl">
       <Table>
@@ -65,7 +64,7 @@ export function DataTable<TData, TValue>({
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} onClick={() => onRowSelect(row.original)}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {cell.column.id == "price" ? flexRender(cell.column.columnDef.cell, cell.getContext()) : flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
